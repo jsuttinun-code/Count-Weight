@@ -81,6 +81,7 @@ nav button{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparen
   <label>จำนวนที่นับได้ (kg)</label><input id="qty" type="number" step="any" inputmode="decimal">
   <button class="btn" id="add">บันทึก</button>
   <div class="row"><button class="btn g" id="done">ปิด Bay นี้</button><button class="btn g" id="next">ปิด + Bay ถัดไป →</button></div>
+  <button class="btn g" id="rop" hidden style="color:var(--wn)">↩ ยกเลิกปิด Bay นี้ (เปิดนับต่อ)</button>
   <button class="btn g" id="pr1">🖨 พิมพ์ใบนับ Bay นี้</button></div>
  <div class="card bl"><h2>รายการใน Bay นี้</h2><div class="sc"><table id="bl"></table></div></div>
 </section>
@@ -158,7 +159,7 @@ function render(){
  $("lsel").innerHTML=L[cd].map(function(l){return"<option"+(l===cl?" selected":"")+">"+(bays[lk(cd,l)]?"✔ ":"")+l+"</option>"}).join("");
  var cs={};counts.forEach(function(c){if(c.dept===cd)cs[c.loc]=1});
  $("chips").innerHTML=L[cd].map(function(l){return'<b data-l="'+l+'" class="'+(bays[lk(cd,l)]?"d ":cs[l]?"p ":"")+(l===cl?"s":"")+'">'+l+"</b>"}).join("");
- $("bst").textContent=(bays[lk(cd,cl)]?"✔ Bay นี้ปิดแล้ว (ยังเพิ่มรายการได้)":"กำลังนับ")+" · "+cd+" "+cl;
+ $("rop").hidden=!bays[lk(cd,cl)];$("bst").textContent=(bays[lk(cd,cl)]?"✔ Bay นี้ปิดแล้ว (ยังเพิ่มรายการได้)":"กำลังนับ")+" · "+cd+" "+cl;
  var m=counts.filter(function(c){return c.dept===cd&&c.loc===cl}).sort(function(a,b){return b.ts-a.ts});
  $("bl").innerHTML="<tr><th>รหัส</th><th>สินค้า</th><th>kg</th><th></th></tr>"+(m.map(function(c){return"<tr><td>"+esc(c.code)+"</td><td>"+esc(c.name)+(c.pack?' <span class="pk">PACK</span>':"")+"</td><td>"+c.qty+'</td><td><button class="x" data-del="'+c.id+'">✕</button></td></tr>'}).join("")||'<tr><td colspan="4" class="mu">ยังไม่มีรายการ</td></tr>');
  var al=counts.filter(function(c){return c.pack}).sort(function(a,b){return b.ts-a.ts});
@@ -216,7 +217,8 @@ $("lkb").onclick=async function(){var p=$("lkp").value;if(!p)return;if(!db)retur
 $("lko").onclick=function(){ul=0;lockui()};
 $("lkc").onclick=async function(){var p=prompt("ตั้งรหัสผ่านใหม่ (อย่างน้อย 4 ตัว)");if(!p||p.length<4||!db)return;pwh=await hx(p);await db.collection("locs").doc("_pw").set({h:pwh});alert("เปลี่ยนรหัสผ่านแล้ว")};
 $("pr2").onclick=function(){var l=[];D.forEach(function(d){L[d].forEach(function(x){if(counts.some(function(c){return c.dept===d&&c.loc===x}))l.push([d,x])})});if(!l.length)return alert("ยังไม่มี Bay ที่มีข้อมูลให้พิมพ์");printBays(l)};
-$("done").onclick=function(){closeBay(0)};$("next").onclick=function(){closeBay(1)};
+$("done").onclick=function(){closeBay(0)};
+$("rop").onclick=function(){if(db&&confirm("ยกเลิกการปิด Bay "+cl+" ใช่หรือไม่?"))db.collection("bays").doc(lk(cd,cl)).delete()};$("next").onclick=function(){closeBay(1)};
 $("sv").onclick=function(){if(!db)return;var ps=[];document.querySelectorAll("[data-e]").forEach(function(t){var l=t.value.split("\n").map(function(s){return s.trim()}).filter(Boolean);ps.push(db.collection("locs").doc(t.dataset.e).set({list:l}))});Promise.all(ps).then(function(){alert("บันทึกแล้ว")},function(e){alert(e.message)})};
 function rx(f,cb){var r=new FileReader();r.onload=function(e){var w=XLSX.read(e.target.result,{type:"array"});cb(XLSX.utils.sheet_to_json(w.Sheets[w.SheetNames[0]],{header:1,raw:true}))};r.readAsArrayBuffer(f)}
 async function bulk(col,arr,st){for(var i=0;i<arr.length;i+=40){await Promise.all(arr.slice(i,i+40).map(function(a){return db.collection(col).doc(a[0]).set(a[1])}));$(st).textContent="กำลังบันทึก "+Math.min(i+40,arr.length)+"/"+arr.length}$(st).textContent="นำเข้าแล้ว "+arr.length+" รายการ"}
