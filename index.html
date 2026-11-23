@@ -82,15 +82,13 @@ nav button{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparen
   <button class="btn" id="add">บันทึก</button>
   <div class="row"><button class="btn g" id="done">ปิด Bay นี้</button><button class="btn g" id="next">ปิด + Bay ถัดไป →</button></div>
   <button class="btn g" id="rop" hidden style="color:var(--wn)">↩ ยกเลิกปิด Bay นี้ (เปิดนับต่อ)</button>
-  <button class="btn g" id="pr1">🖨 พิมพ์ใบนับ Bay นี้</button>
-  <button class="btn g" id="ka1">⌨ Key auto (ไฟล์คีย์ Bay นี้)</button></div>
+  <button class="btn g" id="pr1">🖨 พิมพ์ใบนับ Bay นี้</button></div>
  <div class="card bl"><h2>รายการใน Bay นี้</h2><div class="sc"><table id="bl"></table></div></div>
 </section>
 
 <section id="sum" hidden>
  <div class="row" style="margin-bottom:10px"><button class="btn" id="dx" style="margin:0">⬇ ดาวน์โหลด Excel</button><button class="btn g" id="dc" style="margin:0">⬇ CSV</button></div>
  <button class="btn g" id="pr2" style="margin:0 0 10px">🖨 พิมพ์ใบนับทุก Bay ที่มีข้อมูล</button>
- <button class="btn g" id="ka2" style="margin:0 0 10px">⌨ Key auto ทุก Bay ที่มีข้อมูล</button>
  <div id="al"></div>
  <div class="card"><h2>ความคืบหน้า</h2><div id="pr"></div></div>
  <div class="card"><h2>เทียบสต๊อกระบบ (ASOH+USOH) ต่างมากสุด 25 รายการ (เรียงตามมูลค่าส่วนต่าง)</h2><div class="sc"><table id="vr"></table></div></div>
@@ -209,15 +207,6 @@ function printBays(list){var dt=new Date().toLocaleDateString("en-GB"),h="";
    h+='<div class="pg"><div class="ph"><div class="pl"><b>บมจ.สยามแม็คโคร สาขาอุดรธานี</b><br>วันที่ตรวจนับสินค้า '+dt+'<br>แผนก '+b[0]+(np>1?' · หน้า '+(p+1)+'/'+np:'')+'</div><div class="pt"><big>ใบตรวจนับสินค้าอาหารสด</big><br>( COUNTING SHEET )</div><div class="pb2"><div><span>AISLE</span><b>'+esc(ab[0])+'</b></div><div><span>BAY</span><b>'+esc(ab[1]||"")+'</b></div></div></div><table class="pt2"><tr><th style="width:9%">GRP.</th><th style="width:15%">PLU/Item</th><th style="width:15%">Item</th><th style="width:13%">จำนวน</th><th>DECSR.</th><th style="width:18%">หมายเหตุ</th></tr>'+tr+'</table><div class="pf"><div>ตรวจนับโดย<small>(เขียนตัวบรรจง)</small></div><div>ตรวจสอบโดย</div><div>ป้อนข้อมูลโดย</div></div></div>'}});
  $("prt").innerHTML=h;setTimeout(function(){window.print()},50)}
 $("pr1").onclick=function(){if(cl)printBays([[cd,cl]])};
-async function keyExport(list){var dl=await claude.use("downloads");if(!dl)return alert("ดาวน์โหลดไม่ได้ในหน้านี้");
- var R=[["Aisle","Bay","Article","Quantity","ชื่อสินค้า","Dept"]],skip=0;
- list.forEach(function(b){var ab=b[1].split("-");counts.filter(function(c){return c.dept===b[0]&&c.loc===b[1]}).sort(function(x,y){return x.ts-y.ts}).forEach(function(c){if(c.pack){skip++;return}R.push([ab[0],ab[1]||"",String(c.art||c.code),Math.round(c.qty*1000)/1000,c.name,b[0]])})});
- if(R.length<2)return alert("ไม่มีรายการให้คีย์"+(skip?" (ข้าม Pack Size "+skip+" รายการ)":""));
- var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(R),"Keys");
- var nm=list.length===1?list[0][0]+"-"+list[0][1]:"all";
- try{await dl.save({filename:"keys-"+nm+"-"+new Date().toISOString().slice(0,10)+".xlsx",data:XLSX.write(wb,{type:"array",bookType:"xlsx"})});if(skip)alert("ข้ามสินค้า Pack Size "+skip+" รายการ (ไม่ใส่ในไฟล์คีย์)")}catch(e){if(e&&e.code!=="declined")alert("ดาวน์โหลดไม่สำเร็จ: "+(e.message||e))}}
-$("ka1").onclick=function(){if(cl)keyExport([[cd,cl]])};
-$("ka2").onclick=function(){var l=[];D.forEach(function(d){L[d].forEach(function(x){if(counts.some(function(c){return c.dept===d&&c.loc===x}))l.push([d,x])})});keyExport(l)};
 var pwh=null,ul=0,t0=Date.now();
 async function hx(t){var s="sc1:"+t;try{var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}catch(e){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return"f"+h}}
 function lockui(){$("sb").hidden=!ul;$("lk").hidden=!!ul;if(ul)return;var first=!pwh,wait=first&&Date.now()-t0<4000;$("lkm").textContent=!db?"ยังไม่เชื่อมต่อฐานข้อมูล":wait?"กำลังโหลดข้อมูล…":first?"ยังไม่ได้ตั้งรหัสผ่าน กรอกรหัสใหม่ (อย่างน้อย 4 ตัว) และยืนยันอีกครั้ง":"กรอกรหัสผ่านเพื่อเข้าหน้าจัดการ";$("lkp2").hidden=!first||wait;$("lkb").textContent=first?"ตั้งรหัสและเข้าสู่ระบบ":"เข้าสู่ระบบ";if(wait)setTimeout(lockui,1000)}
