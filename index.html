@@ -105,17 +105,24 @@ nav button{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparen
 </main>
 <div id="prt"></div>
 <script>
-/* โหมดนอก claude.ai (เช่น GitHub Pages): เก็บข้อมูลใน localStorage ของเครื่องนี้ */
+/* โหมดนอก claude.ai (เช่น Vercel/GitHub Pages): เก็บข้อมูลใน IndexedDB ของเครื่องนี้ */
 if(typeof claude==="undefined"){(function(){
-var K="stockcount_",mem={},subs={},tm={};
-function ld(c){if(!mem[c]){try{mem[c]=JSON.parse(localStorage.getItem(K+c)||"{}")}catch(e){mem[c]={}}}return mem[c]}
+var mem={},subs={},tm={},idb=null,N=["plu","stock","counts","bays","locs"],K="stockcount_";
+function open(){return new Promise(function(res){try{var r=indexedDB.open("stockcount",1);r.onupgradeneeded=function(){r.result.createObjectStore("kv")};r.onsuccess=function(){idb=r.result;res()};r.onerror=function(){res()}}catch(e){res()}})}
+function ld(c){return mem[c]||(mem[c]={})}
+function save(c){if(!idb)return;try{var t=idb.transaction("kv","readwrite");t.objectStore("kv").put(ld(c),c);t.onerror=function(){alert("บันทึกข้อมูลลงเบราว์เซอร์ไม่สำเร็จ")}}catch(e){alert("บันทึกข้อมูลลงเบราว์เซอร์ไม่สำเร็จ")}}
+function loadAll(){return open().then(function(){return Promise.all(N.map(function(c){return new Promise(function(res){
+ function mig(){try{var o=JSON.parse(localStorage.getItem(K+c)||"null");if(o){var m=ld(c);for(var k in o)if(!(k in m))m[k]=o[k];save(c);localStorage.removeItem(K+c)}}catch(e){}res()}
+ if(!idb){mem[c]={};return mig()}
+ var q=idb.transaction("kv").objectStore("kv").get(c);q.onsuccess=function(){mem[c]=q.result||{};mig()};q.onerror=function(){mem[c]={};mig()}})}))})}
 function snap(c){var o=ld(c);return{docs:Object.keys(o).map(function(id){return{id:id,exists:true,data:function(){return o[id]}}})}}
-function touch(c){if(tm[c])return;tm[c]=setTimeout(function(){tm[c]=0;try{localStorage.setItem(K+c,JSON.stringify(mem[c]))}catch(e){alert("พื้นที่เก็บข้อมูลในเบราว์เซอร์เต็ม")}(subs[c]||[]).forEach(function(f){f(snap(c))})},30)}
+function touch(c){if(tm[c])return;tm[c]=setTimeout(function(){tm[c]=0;save(c);(subs[c]||[]).forEach(function(f){f(snap(c))})},30)}
 var db={collection:function(c){return{
  doc:function(id){return{set:function(d){ld(c)[id]=d;touch(c);return Promise.resolve()},delete:function(){delete ld(c)[id];touch(c);return Promise.resolve()}}},
  onSnapshot:function(f){(subs[c]=subs[c]||[]).push(f);f(snap(c));return function(){}}}}};
 var dl={save:function(r){var b=r.data instanceof Blob?r.data:new Blob([r.data]),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=r.filename;document.body.appendChild(a);a.click();a.remove();return Promise.resolve({status:"saved"})}};
-window.claude={use:function(n){return Promise.resolve(n==="db"?db:n==="downloads"?dl:null)}}})()}
+var ready=loadAll();
+window.claude={use:function(n){return ready.then(function(){return n==="db"?db:n==="downloads"?dl:null})}}})()}
 </script>
 <script>
 var D=["FV","BUT","FS","FZ"],L={"FV":["510-081","510-091","510-101","510-141","510-151","510-161","510-221","510-231","510-241","510-281","510-291","510-301","510-321","510-331","510-341","510-351","510-361","510-371","510-401","510-411","510-421","510-431","510-441","510-451","510-461","511-011","511-021","511-031","511-041","511-051","999-001"],"BUT":["520-011","520-021","520-031","520-051","520-061","520-071","520-081","520-131","520-141","520-151","520-161","520-171","520-181","520-191","520-201","520-211","520-221","520-231","520-241","520-261","520-271","520-281","520-291","520-301","520-311","520-371","520-381","520-391","520-401","520-411","520-421","520-431","520-441","520-451","520-461","520-471","520-481","520-491","520-501","520-511","520-521","520-541","520-551","520-561","520-571","521-011","521-021","521-031","521-041","521-111","521-121","521-131","521-141","521-151","521-161","521-171","521-181","521-191","521-201","521-211","521-221","521-231","521-241","521-251","521-261","521-271","521-281","521-291","521-301","999-002"],"FS":["531-011","531-021","531-031","531-041","531-051","531-061","531-071","531-081","999-003"],"FZ":["550-331","550-341","550-351","550-361","550-371","560-381","560-501","560-521","560-531","560-571","560-611","560-631","560-641","560-651","560-701","560-751","560-761","560-781","560-811","560-961","560-971","560-981","570-011","551-041","551-051","551-111","999-004"]},plu={},art={},pa={},counts=[],bays={},db=null,me="",cd="FV",cl=L.FV[0],$=function(i){return document.getElementById(i)};
