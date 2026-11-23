@@ -161,7 +161,7 @@ function render(){
  $("lsel").innerHTML=L[cd].map(function(l){return"<option"+(l===cl?" selected":"")+">"+(bays[lk(cd,l)]?"✔ ":"")+l+"</option>"}).join("");
  var cs={};counts.forEach(function(c){if(c.dept===cd)cs[c.loc]=1});
  $("chips").innerHTML=L[cd].map(function(l){return'<b data-l="'+l+'" class="'+(bays[lk(cd,l)]?"d ":cs[l]?"p ":"")+(l===cl?"s":"")+'">'+l+"</b>"}).join("");
- $("rop").hidden=!bays[lk(cd,cl)];$("bst").textContent=(bays[lk(cd,cl)]?"✔ Bay นี้ปิดแล้ว (ยังเพิ่มรายการได้)":"กำลังนับ")+" · "+cd+" "+cl;
+ $("rop").hidden=!bays[lk(cd,cl)];$("bst").textContent=!cl?"ยังไม่มี Aisle-Bay ในแผนกนี้ (เพิ่มที่หน้าจัดการ)":(bays[lk(cd,cl)]?"✔ Bay นี้ปิดแล้ว (ยังเพิ่มรายการได้)":"กำลังนับ")+" · "+cd+" "+cl;
  var m=counts.filter(function(c){return c.dept===cd&&c.loc===cl}).sort(function(a,b){return b.ts-a.ts});
  $("bl").innerHTML="<tr><th>รหัส</th><th>สินค้า</th><th>kg</th><th></th></tr>"+(m.map(function(c){return"<tr><td>"+esc(c.code)+"</td><td>"+esc(c.name)+(c.pack?' <span class="pk">PACK</span>':"")+"</td><td>"+c.qty+'</td><td><button class="x" data-del="'+c.id+'">✕</button></td></tr>'}).join("")||'<tr><td colspan="4" class="mu">ยังไม่มีรายการ</td></tr>');
  var al=counts.filter(function(c){return c.pack}).sort(function(a,b){return b.ts-a.ts});
@@ -188,10 +188,10 @@ $("code").oninput=lookui;
 $("code").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();$("qty").focus()}};
 $("qty").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();$("add").click()}};
 $("add").onclick=function(){var code=$("code").value.trim(),q=parseFloat($("qty").value),r=look(code);
- if(!db)return alert("ยังไม่เชื่อมต่อฐานข้อมูล");if(!code||isNaN(q))return alert("กรอกรหัสและจำนวนให้ครบ");
+ if(!db)return alert("ยังไม่เชื่อมต่อฐานข้อมูล");if(!cl)return alert("ยังไม่มี Aisle-Bay ในแผนกนี้ เพิ่มได้ที่หน้าจัดการ");if(!code||isNaN(q))return alert("กรอกรหัสและจำนวนให้ครบ");
  if(r.unk&&!confirm("ไม่พบรหัสนี้ในระบบ บันทึกต่อหรือไม่?"))return;
  var ts=Date.now();db.collection("counts").doc(lk(cd,cl)+"_"+ts).set({dept:cd,loc:cl,code:code,art:r.art,name:r.name||"(ไม่พบรหัส)",qty:q,pack:!!r.pack,unk:!!r.unk,ts:ts,by:me}).then(function(){$("code").value="";$("qty").value="";lookui();$("code").focus()},function(e){alert("บันทึกไม่ได้: "+e.message)})};
-function closeBay(go){if(!db)return;db.collection("bays").doc(lk(cd,cl)).set({done:true,ts:Date.now()});if(go){var i=L[cd].indexOf(cl);if(i<L[cd].length-1)cl=L[cd][i+1];render()}}
+function closeBay(go){if(!db||!cl)return;db.collection("bays").doc(lk(cd,cl)).set({done:true,ts:Date.now()});if(go){var i=L[cd].indexOf(cl);if(i<L[cd].length-1)cl=L[cd][i+1];render()}}
 async function expo(k){var dl=await claude.use("downloads");if(!dl)return alert("ดาวน์โหลดไม่ได้ในหน้านี้");
  var A=[["แผนก","Aisle-Bay","รหัสที่กรอก","Art No","ชื่อสินค้า","จำนวน (kg)","Pack Size","เวลา","ผู้นับ"]],P=[["แผนก","Aisle-Bay","รหัส","ชื่อสินค้า","จำนวน"]],ag={},nm={};
  counts.slice().sort(function(a,b){return a.ts-b.ts}).forEach(function(c){A.push([c.dept,c.loc,c.code,c.art,c.name,c.qty,c.pack?"Y":"",new Date(c.ts).toLocaleString("th-TH"),c.by||""]);if(c.pack)P.push([c.dept,c.loc,c.code,c.name,c.qty]);else if(!c.unk){ag[c.art]=(ag[c.art]||0)+c.qty;nm[c.art]=c.name}});
@@ -208,7 +208,7 @@ function printBays(list){var dt=new Date().toLocaleDateString("en-GB"),h="";
   for(var p=0;p<np;p++){var tr="";for(var i=0;i<20;i++){var c=rs[p*20+i],s=c&&art[c.art];tr+="<tr><td>"+(s?esc(s.cls||""):"")+"</td><td class=y>"+(c?esc(c.code):"")+"</td><td>"+(c?esc(c.art):"")+"</td><td class=y style='text-align:right'>"+(c?c.qty.toFixed(3):"")+"</td><td style='text-align:left'>"+(c?esc(c.name):"")+"</td><td>"+(c&&c.pack?"Pack Size":"")+"</td></tr>"}
    h+='<div class="pg"><div class="ph"><div class="pl"><b>บมจ.สยามแม็คโคร สาขาอุดรธานี</b><br>วันที่ตรวจนับสินค้า '+dt+'<br>แผนก '+b[0]+(np>1?' · หน้า '+(p+1)+'/'+np:'')+'</div><div class="pt"><big>ใบตรวจนับสินค้าอาหารสด</big><br>( COUNTING SHEET )</div><div class="pb2"><div><span>AISLE</span><b>'+esc(ab[0])+'</b></div><div><span>BAY</span><b>'+esc(ab[1]||"")+'</b></div></div></div><table class="pt2"><tr><th style="width:9%">GRP.</th><th style="width:15%">PLU/Item</th><th style="width:15%">Item</th><th style="width:13%">จำนวน</th><th>DECSR.</th><th style="width:18%">หมายเหตุ</th></tr>'+tr+'</table><div class="pf"><div>ตรวจนับโดย<small>(เขียนตัวบรรจง)</small></div><div>ตรวจสอบโดย</div><div>ป้อนข้อมูลโดย</div></div></div>'}});
  $("prt").innerHTML=h;setTimeout(function(){window.print()},50)}
-$("pr1").onclick=function(){printBays([[cd,cl]])};
+$("pr1").onclick=function(){if(cl)printBays([[cd,cl]])};
 async function keyExport(list){var dl=await claude.use("downloads");if(!dl)return alert("ดาวน์โหลดไม่ได้ในหน้านี้");
  var R=[["Aisle","Bay","Article","Quantity","ชื่อสินค้า","Dept"]],skip=0;
  list.forEach(function(b){var ab=b[1].split("-");counts.filter(function(c){return c.dept===b[0]&&c.loc===b[1]}).sort(function(x,y){return x.ts-y.ts}).forEach(function(c){if(c.pack){skip++;return}R.push([ab[0],ab[1]||"",String(c.art||c.code),Math.round(c.qty*1000)/1000,c.name,b[0]])})});
@@ -216,7 +216,7 @@ async function keyExport(list){var dl=await claude.use("downloads");if(!dl)retur
  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(R),"Keys");
  var nm=list.length===1?list[0][0]+"-"+list[0][1]:"all";
  try{await dl.save({filename:"keys-"+nm+"-"+new Date().toISOString().slice(0,10)+".xlsx",data:XLSX.write(wb,{type:"array",bookType:"xlsx"})});if(skip)alert("ข้ามสินค้า Pack Size "+skip+" รายการ (ไม่ใส่ในไฟล์คีย์)")}catch(e){if(e&&e.code!=="declined")alert("ดาวน์โหลดไม่สำเร็จ: "+(e.message||e))}}
-$("ka1").onclick=function(){keyExport([[cd,cl]])};
+$("ka1").onclick=function(){if(cl)keyExport([[cd,cl]])};
 $("ka2").onclick=function(){var l=[];D.forEach(function(d){L[d].forEach(function(x){if(counts.some(function(c){return c.dept===d&&c.loc===x}))l.push([d,x])})});keyExport(l)};
 var pwh=null,ul=0,t0=Date.now();
 async function hx(t){var s="sc1:"+t;try{var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}catch(e){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return"f"+h}}
@@ -230,7 +230,7 @@ $("lkc").onclick=async function(){var p=prompt("ตั้งรหัสผ่�
 $("pr2").onclick=function(){var l=[];D.forEach(function(d){L[d].forEach(function(x){if(counts.some(function(c){return c.dept===d&&c.loc===x}))l.push([d,x])})});if(!l.length)return alert("ยังไม่มี Bay ที่มีข้อมูลให้พิมพ์");printBays(l)};
 $("done").onclick=function(){closeBay(0)};
 $("rop").onclick=function(){if(db&&confirm("ยกเลิกการปิด Bay "+cl+" ใช่หรือไม่?"))db.collection("bays").doc(lk(cd,cl)).delete()};$("next").onclick=function(){closeBay(1)};
-$("sv").onclick=function(){if(!db)return;var ps=[];document.querySelectorAll("[data-e]").forEach(function(t){var l=t.value.split("\n").map(function(s){return s.trim()}).filter(Boolean);if(l.length){L[t.dataset.e]=l;ps.push(db.collection("locs").doc(t.dataset.e).set({list:l}))}});setLoc();render();edui();Promise.all(ps).then(function(){alert("บันทึกแล้ว")},function(e){alert(e.message)})};
+$("sv").onclick=function(){if(!db)return;var ps=[];document.querySelectorAll("[data-e]").forEach(function(t){var l=t.value.split("\n").map(function(s){return s.trim()}).filter(Boolean);if(!l.length&&!confirm("ลบ Aisle-Bay ทั้งหมดของ "+t.dataset.e+" ?"))return;L[t.dataset.e]=l;ps.push(db.collection("locs").doc(t.dataset.e).set({list:l}))});setLoc();render();edui();Promise.all(ps).then(function(){alert("บันทึกแล้ว")},function(e){alert(e.message)})};
 function rx(f,cb){var r=new FileReader();r.onload=function(e){var w=XLSX.read(e.target.result,{type:"array"});cb(XLSX.utils.sheet_to_json(w.Sheets[w.SheetNames[0]],{header:1,raw:true}))};r.readAsArrayBuffer(f)}
 async function bulk(col,arr,st){for(var i=0;i<arr.length;i+=40){await Promise.all(arr.slice(i,i+40).map(function(a){return db.collection(col).doc(a[0]).set(a[1])}));$(st).textContent="กำลังบันทึก "+Math.min(i+40,arr.length)+"/"+arr.length}$(st).textContent="นำเข้าแล้ว "+arr.length+" รายการ"}
 $("fp").onchange=function(){if(!db||!this.files[0])return;rx(this.files[0],function(r){var a=[];r.slice(1).forEach(function(x){if(x[0]!=null&&x[1]!=null)a.push([String(x[0]).trim(),{art:String(x[1]).trim(),name:String(x[2]||"")}])});bulk("plu",a,"sp")})};
@@ -246,6 +246,6 @@ render();
  db.collection("stock").onSnapshot(function(s){art={};s.docs.forEach(function(d){art[d.id]=d.data()});lookui();render()});
  db.collection("counts").onSnapshot(function(s){counts=s.docs.map(function(d){var x=d.data();x.id=d.id;return x});render()});
  db.collection("bays").onSnapshot(function(s){bays={};s.docs.forEach(function(d){bays[d.id]=1});render()});
- db.collection("locs").onSnapshot(function(s){s.docs.forEach(function(d){var x=d.data();if(d.id==="_pw"){pwh=x.h;return}var l=x.list;if(l&&l.length)L[d.id]=l});if(!ul)lockui();render()});
+ db.collection("locs").onSnapshot(function(s){s.docs.forEach(function(d){var x=d.data();if(d.id==="_pw"){pwh=x.h;return}var l=x.list;if(Array.isArray(l))L[d.id]=l});if(!ul)lockui();render()});
 })();
 </script></body></html>
