@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>นับสต๊อก Weight</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f4f6f8;--cd:#fff;--tx:#1b1f24;--mu:#6a7480;--bd:#dde1e6;--ac:#0b7a5a;--am:#e8a317;--wn:#c62828;--wb:#fdecea;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181c;--cd:#1f242a;--tx:#eceff2;--mu:#9aa5b1;--bd:#333b44;--ac:#3ecf9f;--am:#f2b84b;--wn:#ff8a80;--wb:#3a1f1f;color-scheme:dark}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 "Noto Sans Thai",system-ui,sans-serif}
+main{max-width:680px;margin:0 auto;padding:10px}
+.bar1{display:flex;gap:6px;margin-bottom:8px}.bar1 button{flex:1;padding:8px 4px;border:1px dashed var(--bd);background:transparent;color:var(--mu);border-radius:8px;font:inherit;font-size:13px}
+.bar1 button.on{border-style:solid;border-color:var(--ac);color:var(--ac);font-weight:700}
+nav{display:flex;gap:6px;margin-bottom:10px}nav button{flex:1;padding:10px;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:10px;font:inherit;font-weight:600}nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+h2{font-size:15px;margin:0 0 8px}label{display:block;font-size:12px;color:var(--mu);margin:8px 0 3px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.btn{padding:11px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;font-weight:700;width:100%;margin-top:8px}.btn.g{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+.nm{min-height:24px;font-weight:700;margin-top:6px}.mu{color:var(--mu);font-size:13px}
+.warn{background:var(--wb);color:var(--wn);border:1px solid var(--wn);border-radius:10px;padding:10px;margin-bottom:10px;font-weight:600}
+.pb{height:12px;background:var(--bd);border-radius:6px;overflow:hidden}.pb i{display:block;height:100%;background:var(--ac)}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 4px;border-bottom:1px solid var(--bd);text-align:left}.sc{overflow-x:auto}
+.pk{color:var(--wn);font-weight:700}.x{background:none;border:0;color:var(--mu);font-size:16px}
+#chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:190px;overflow:auto}
+#chips b{font-weight:600;font-size:12px;padding:7px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--bg)}
+#chips b.d{background:var(--ac);color:#fff;border-color:var(--ac)}#chips b.p{border-color:var(--am);box-shadow:inset 0 0 0 1px var(--am)}#chips b.s{outline:2px solid var(--tx)}
+.dep{display:flex;gap:6px}.dep button{flex:1;padding:9px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:8px;font:inherit;font-weight:700}.dep button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+body:not(.v-b) #chips{display:none}body.v-b #sel{display:none}
+body.v-b .card{border-radius:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+body.v-c main{max-width:480px}body.v-c .bl,body.v-c #chips{display:none}
+body.v-c #code,body.v-c #qty{font-size:26px;padding:16px;text-align:center}body.v-c .btn{padding:16px;font-size:17px}
+body.v-c .dep{display:none}body.v-c #sel{display:block}
+body.v-a .dep{display:flex}
+:root{--bg:#f2f2f7;--cd:#fff;--tx:#000;--mu:#8e8e93;--bd:rgba(60,60,67,.18);--ac:#007aff;--am:#ff9500;--wn:#ff3b30;--wb:#ffeceb}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--cd:#1c1c1e;--tx:#fff;--mu:#8e8e93;--bd:rgba(84,84,88,.5);--ac:#0a84ff;--am:#ff9f0a;--wn:#ff453a;--wb:#3a1a19}}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Noto Sans Thai",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+main{padding-bottom:96px}
+.lt{font-size:32px;font-weight:700;letter-spacing:-.5px;margin:8px 4px 12px}
+.card{border:0;border-radius:14px;padding:14px}
+h2{font-size:13px;font-weight:600;color:var(--mu);margin:0 0 8px}
+label{margin:10px 0 4px}
+input,select,textarea{border:0;border-radius:10px;padding:11px 12px;font-size:16px;background:var(--bg)}
+.btn{border-radius:14px;padding:14px;font-weight:600;font-size:16px}
+.btn.g{background:color-mix(in srgb,var(--ac) 14%,transparent);color:var(--ac);border:0}
+.warn{border:0;border-radius:12px;background:var(--wb)}
+.pb{height:8px;border-radius:4px}
+td,th{border-bottom:.5px solid var(--bd);padding:8px 4px}
+.dep{background:rgba(118,118,128,.16);border-radius:9px;padding:2px;gap:2px;margin-bottom:4px}
+.dep button{border:0;background:transparent;border-radius:7px;padding:7px 0;font-weight:600;font-size:14px;color:var(--tx)}
+.dep button.on{background:var(--cd);color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+#sel>div:first-child{display:none}
+nav{position:fixed;left:0;right:0;bottom:0;margin:0;gap:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--cd) 82%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:.5px solid var(--bd);z-index:5}
+nav button{border:0;background:transparent;border-radius:0;color:var(--mu);font-size:11px;font-weight:500;padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:1px}
+nav button.on{background:transparent;color:var(--ac)}
+nav button span{font-size:22px;line-height:1.1}
+</style></head><body class="v-a"><main>
+
+<h1 class="lt">นับสต๊อก Weight</h1>
+<nav><button data-t="count" class="on"><span>📋</span>นับสินค้า</button><button data-t="sum"><span>📊</span>สรุป</button><button data-t="set"><span>⚙️</span>จัดการ</button></nav>
+<div id="st" class="mu"></div>
+
+<section id="count">
+ <div class="card"><h2>ตำแหน่ง</h2>
+  <div class="dep" id="dep"></div>
+  <div id="sel" class="row"><div style="flex:0 0 90px"><label>แผนก</label><select id="dsel"></select></div><div><label>Aisle-Bay</label><select id="lsel"></select></div></div>
+  <div id="chips"></div><div id="bst" class="mu" style="margin-top:6px"></div></div>
+ <div class="card"><h2>บันทึกจำนวน</h2>
+  <div id="pkw" class="warn" hidden>⚠ สินค้านี้เป็น Pack Size / ไม่ใช่ Weight บันทึกได้ แต่จะแจ้งเตือนที่หน้าสรุป</div>
+  <label>PLU / Item No</label><input id="code" inputmode="numeric" autocomplete="off" placeholder="พิมพ์หรือยิงรหัส">
+  <div id="nm" class="nm"></div><div id="bk" class="mu"></div>
+  <label>จำนวนที่นับได้ (kg)</label><input id="qty" type="number" step="any" inputmode="decimal">
+  <button class="btn" id="add">บันทึก</button>
+  <div class="row"><button class="btn g" id="done">ปิด Bay นี้</button><button class="btn g" id="next">ปิด + Bay ถัดไป →</button></div></div>
+ <div class="card bl"><h2>รายการใน Bay นี้</h2><div class="sc"><table id="bl"></table></div></div>
+</section>
+
+<section id="sum" hidden>
+ <div class="row" style="margin-bottom:10px"><button class="btn" id="dx" style="margin:0">⬇ ดาวน์โหลด Excel</button><button class="btn g" id="dc" style="margin:0">⬇ CSV</button></div>
+ <div id="al"></div>
+ <div class="card"><h2>ความคืบหน้า</h2><div id="pr"></div></div>
+ <div class="card"><h2>เทียบสต๊อกระบบ (ASOH+USOH) ต่างมากสุด 25 รายการ</h2><div class="sc"><table id="vr"></table></div></div>
+ <div class="card"><h2>นับล่าสุด</h2><div class="sc"><table id="rc"></table></div></div>
+</section>
+
+<section id="set" hidden>
+ <div class="card"><h2>นำเข้าไฟล์ Excel</h2>
+  <label>1) PLU.xlsx (PLU, Art No, ชื่อ)</label><input type="file" id="fp" accept=".xlsx"><div class="mu" id="sp"></div>
+  <label>2) ItemList (ASOH, USOH, Pack Size) · เก็บเฉพาะ Dept 1, 2, 3, 5</label><input type="file" id="fi" accept=".xlsx"><div class="mu" id="si"></div>
+  <label>3) Aisle_Bay (คอลัมน์ FV, BUT, FS, FZ)</label><input type="file" id="fa" accept=".xlsx"><div class="mu" id="sa"></div>
+  <div class="mu" id="cnt" style="margin-top:8px"></div></div>
+ <div class="card"><h2>แก้ไข Aisle-Bay (1 บรรทัด = 1 รหัส)</h2><div id="ed"></div><button class="btn" id="sv">บันทึกรายการ Aisle-Bay</button></div>
+</section>
+</main>
+<script>
+var D=["FV","BUT","FS","FZ"],L={"FV":["510-081","510-091","510-101","510-141","510-151","510-161","510-221","510-231","510-241","510-281","510-291","510-301","510-321","510-331","510-341","510-351","510-361","510-371","510-401","510-411","510-421","510-431","510-441","510-451","510-461","511-011","511-021","511-031","511-041","511-051","999-001"],"BUT":["520-011","520-021","520-031","520-051","520-061","520-071","520-081","520-131","520-141","520-151","520-161","520-171","520-181","520-191","520-201","520-211","520-221","520-231","520-241","520-261","520-271","520-281","520-291","520-301","520-311","520-371","520-381","520-391","520-401","520-411","520-421","520-431","520-441","520-451","520-461","520-471","520-481","520-491","520-501","520-511","520-521","520-541","520-551","520-561","520-571","521-011","521-021","521-031","521-041","521-111","521-121","521-131","521-141","521-151","521-161","521-171","521-181","521-191","521-201","521-211","521-221","521-231","521-241","521-251","521-261","521-271","521-281","521-291","521-301","999-002"],"FS":["531-011","531-021","531-031","531-041","531-051","531-061","531-071","531-081","999-003"],"FZ":["550-331","550-341","550-351","550-361","550-371","560-381","560-501","560-521","560-531","560-571","560-611","560-631","560-641","560-651","560-701","560-751","560-761","560-781","560-811","560-961","560-971","560-981","570-011","551-041","551-051","551-111","999-004"]},plu={},art={},pa={},counts=[],bays={},db=null,me="",cd="FV",cl=L.FV[0],$=function(i){return document.getElementById(i)};
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function n2(x){return Math.round(x*100)/100}
+function look(c){c=c.trim();if(!c)return null;var p=plu[c],s;
+ if(p){s=art[p.art];return{art:p.art,name:p.name,pack:!!(s&&s.pack>1),s:s}}
+ s=art[c];if(s)return{art:c,name:s.name,pack:!pa[c]||s.pack>1,s:s};return{art:c,name:"",unk:1}}
+function setLoc(){if(L[cd].indexOf(cl)<0)cl=L[cd][0]||""}
+function lk(d,l){return d+"_"+l}
+function render(){
+ setLoc();$("st").textContent=db?"":"⚠ ยังเชื่อมต่อฐานข้อมูลไม่ได้ (ต้องเปิดผ่าน claude.ai) ข้อมูลจะไม่ถูกบันทึกร่วมกัน";
+ $("dep").innerHTML=D.map(function(d){return'<button data-d="'+d+'" class="'+(d===cd?"on":"")+'">'+d+"</button>"}).join("");
+ $("dsel").innerHTML=D.map(function(d){return"<option"+(d===cd?" selected":"")+">"+d+"</option>"}).join("");
+ $("lsel").innerHTML=L[cd].map(function(l){return"<option"+(l===cl?" selected":"")+">"+(bays[lk(cd,l)]?"✔ ":"")+l+"</option>"}).join("");
+ var cs={};counts.forEach(function(c){if(c.dept===cd)cs[c.loc]=1});
+ $("chips").innerHTML=L[cd].map(function(l){return'<b data-l="'+l+'" class="'+(bays[lk(cd,l)]?"d ":cs[l]?"p ":"")+(l===cl?"s":"")+'">'+l+"</b>"}).join("");
+ $("bst").textContent=(bays[lk(cd,cl)]?"✔ Bay นี้ปิดแล้ว (ยังเพิ่มรายการได้)":"กำลังนับ")+" · "+cd+" "+cl;
+ var m=counts.filter(function(c){return c.dept===cd&&c.loc===cl}).sort(function(a,b){return b.ts-a.ts});
+ $("bl").innerHTML="<tr><th>รหัส</th><th>สินค้า</th><th>kg</th><th></th></tr>"+(m.map(function(c){return"<tr><td>"+esc(c.code)+"</td><td>"+esc(c.name)+(c.pack?' <span class="pk">PACK</span>':"")+"</td><td>"+c.qty+'</td><td><button class="x" data-del="'+c.id+'">✕</button></td></tr>'}).join("")||'<tr><td colspan="4" class="mu">ยังไม่มีรายการ</td></tr>');
+ var al=counts.filter(function(c){return c.pack}).sort(function(a,b){return b.ts-a.ts});
+ $("al").innerHTML=al.length?'<div class="warn">⚠ พบสินค้า Pack Size ถูกนำมานับ '+al.length+" รายการ<br>"+al.map(function(c){return"• "+c.dept+" "+c.loc+" – "+esc(c.code)+" "+esc(c.name)+" ("+c.qty+")"}).join("<br>")+"</div>":"";
+ $("pr").innerHTML=D.map(function(d){var t=L[d].length,dn=L[d].filter(function(l){return bays[lk(d,l)]}).length,q=0,n=0;counts.forEach(function(c){if(c.dept===d&&!c.pack){q+=c.qty;n++}});var p=t?Math.round(dn*100/t):0;
+  return'<div style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><b>'+d+'</b><span style="text-align:right">'+p+"% ("+dn+"/"+t+' Bay)</span></div><div class="pb"><i style="width:'+p+'%"></i></div><div class="mu">นับแล้ว '+n+" รายการ · รวม "+n2(q)+" kg</div></div>"}).join("");
+ var ag={};counts.forEach(function(c){if(!c.pack&&!c.unk)ag[c.art]=(ag[c.art]||0)+c.qty});
+ var vr=Object.keys(ag).map(function(a){var s=art[a],b=s?s.asoh+s.usoh:null;return{a:a,n:(s&&s.name)||(counts.filter(function(c){return c.art===a})[0]||{}).name,c:ag[a],b:b,d:b==null?0:ag[a]-b}}).sort(function(x,y){return Math.abs(y.d)-Math.abs(x.d)}).slice(0,25);
+ $("vr").innerHTML="<tr><th>สินค้า</th><th>นับ</th><th>ระบบ</th><th>ต่าง</th></tr>"+(vr.map(function(r){return"<tr><td>"+esc(r.n)+"</td><td>"+n2(r.c)+"</td><td>"+(r.b==null?"-":n2(r.b))+'</td><td class="'+(Math.abs(r.d)>0.001&&r.b!=null?"pk":"")+'">'+(r.b==null?"-":n2(r.d))+"</td></tr>"}).join("")||'<tr><td colspan="4" class="mu">ยังไม่มีข้อมูลนับ</td></tr>');
+ var rc=counts.slice().sort(function(a,b){return b.ts-a.ts}).slice(0,20);
+ $("rc").innerHTML="<tr><th>ตำแหน่ง</th><th>สินค้า</th><th>kg</th></tr>"+rc.map(function(c){return"<tr><td>"+c.dept+" "+c.loc+"</td><td>"+esc(c.name)+(c.pack?' <span class="pk">PACK</span>':"")+"</td><td>"+c.qty+"</td></tr>"}).join("");
+ $("cnt").textContent="ในระบบ: PLU "+Object.keys(plu).length+" · Itemlist "+Object.keys(art).length+" รายการ"}
+function edui(){$("ed").innerHTML=D.map(function(d){return"<label>"+d+" ("+L[d].length+")</label><textarea rows=4 data-e='"+d+"'>"+L[d].join("\n")+"</textarea>"}).join("")}
+function lookui(){var r=look($("code").value);$("nm").textContent=r?(r.unk?"ไม่พบรหัสนี้ในระบบ":r.name):"";$("nm").style.color=r&&r.unk?"var(--wn)":"";$("pkw").hidden=!(r&&r.pack);
+ var b=r&&r.s?"สต๊อกระบบ ASOH+USOH = "+n2(r.s.asoh+r.s.usoh):"";$("bk").textContent=b}
+document.addEventListener("click",function(e){var t=e.target,d=t.dataset;
+ if(d.v){var cl2=document.body.className;document.body.className="v-"+d.v;document.querySelectorAll(".bar1 button").forEach(function(b){b.classList.toggle("on",b===t)})}
+ if(d.t){["count","sum","set"].forEach(function(s){$(s).hidden=s!==d.t});document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b===t)});if(d.t==="set")edui()}
+ if(d.d){cd=d.d;cl=L[cd][0];render()}if(d.l){cl=d.l;render()}
+ if(d.del&&db)db.collection("counts").doc(d.del).delete()});
+$("dsel").onchange=function(){cd=this.value;cl=L[cd][0];render()};
+$("lsel").onchange=function(){cl=this.value.replace("✔ ","");render()};
+$("code").oninput=lookui;
+$("code").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();$("qty").focus()}};
+$("qty").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();$("add").click()}};
+$("add").onclick=function(){var code=$("code").value.trim(),q=parseFloat($("qty").value),r=look(code);
+ if(!db)return alert("ยังไม่เชื่อมต่อฐานข้อมูล");if(!code||isNaN(q))return alert("กรอกรหัสและจำนวนให้ครบ");
+ if(r.unk&&!confirm("ไม่พบรหัสนี้ในระบบ บันทึกต่อหรือไม่?"))return;
+ var ts=Date.now();db.collection("counts").doc(lk(cd,cl)+"_"+ts).set({dept:cd,loc:cl,code:code,art:r.art,name:r.name||"(ไม่พบรหัส)",qty:q,pack:!!r.pack,unk:!!r.unk,ts:ts,by:me}).then(function(){$("code").value="";$("qty").value="";lookui();$("code").focus()},function(e){alert("บันทึกไม่ได้: "+e.message)})};
+function closeBay(go){if(!db)return;db.collection("bays").doc(lk(cd,cl)).set({done:true,ts:Date.now()});if(go){var i=L[cd].indexOf(cl);if(i<L[cd].length-1)cl=L[cd][i+1];render()}}
+async function expo(k){var dl=await claude.use("downloads");if(!dl)return alert("ดาวน์โหลดไม่ได้ในหน้านี้");
+ var A=[["แผนก","Aisle-Bay","รหัสที่กรอก","Art No","ชื่อสินค้า","จำนวน (kg)","Pack Size","เวลา","ผู้นับ"]],P=[["แผนก","Aisle-Bay","รหัส","ชื่อสินค้า","จำนวน"]],ag={},nm={};
+ counts.slice().sort(function(a,b){return a.ts-b.ts}).forEach(function(c){A.push([c.dept,c.loc,c.code,c.art,c.name,c.qty,c.pack?"Y":"",new Date(c.ts).toLocaleString("th-TH"),c.by||""]);if(c.pack)P.push([c.dept,c.loc,c.code,c.name,c.qty]);else if(!c.unk){ag[c.art]=(ag[c.art]||0)+c.qty;nm[c.art]=c.name}});
+ var V=[["Art No","ชื่อสินค้า","นับได้","ASOH","USOH","ASOH+USOH","ส่วนต่าง"]];
+ Object.keys(ag).forEach(function(a){var s=art[a];V.push([a,(s&&s.name)||nm[a],n2(ag[a]),s?s.asoh:"",s?s.usoh:"",s?s.asoh+s.usoh:"",s?n2(ag[a]-s.asoh-s.usoh):""])});
+ var G=[["แผนก","Bay ทั้งหมด","ปิดแล้ว","%"]];D.forEach(function(d){var t=L[d].length,n=L[d].filter(function(l){return bays[lk(d,l)]}).length;G.push([d,t,n,t?Math.round(n*100/t):0])});
+ var dt=new Date().toISOString().slice(0,10);
+ try{if(k==="x"){var wb=XLSX.utils.book_new();[["ผลนับ",A],["เทียบสต๊อก",V],["Pack Size",P],["ความคืบหน้า",G]].forEach(function(s){XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s[1]),s[0])});await dl.save({filename:"stock-count-"+dt+".xlsx",data:XLSX.write(wb,{type:"array",bookType:"xlsx"})})}
+ else{var csv="\ufeff"+A.map(function(r){return r.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"'}).join(",")}).join("\r\n");await dl.save({filename:"stock-count-"+dt+".csv",data:csv})}}
+ catch(e){if(e&&e.code!=="declined")alert("ดาวน์โหลดไม่สำเร็จ ("+(e.message||e)+") ลองกดปุ่ม CSV แทน")}}
+$("dx").onclick=function(){expo("x")};$("dc").onclick=function(){expo("c")};
+$("done").onclick=function(){closeBay(0)};$("next").onclick=function(){closeBay(1)};
+$("sv").onclick=function(){if(!db)return;var ps=[];document.querySelectorAll("[data-e]").forEach(function(t){var l=t.value.split("\n").map(function(s){return s.trim()}).filter(Boolean);ps.push(db.collection("locs").doc(t.dataset.e).set({list:l}))});Promise.all(ps).then(function(){alert("บันทึกแล้ว")},function(e){alert(e.message)})};
+function rx(f,cb){var r=new FileReader();r.onload=function(e){var w=XLSX.read(e.target.result,{type:"array"});cb(XLSX.utils.sheet_to_json(w.Sheets[w.SheetNames[0]],{header:1,raw:true}))};r.readAsArrayBuffer(f)}
+async function bulk(col,arr,st){for(var i=0;i<arr.length;i+=40){await Promise.all(arr.slice(i,i+40).map(function(a){return db.collection(col).doc(a[0]).set(a[1])}));$(st).textContent="กำลังบันทึก "+Math.min(i+40,arr.length)+"/"+arr.length}$(st).textContent="นำเข้าแล้ว "+arr.length+" รายการ"}
+$("fp").onchange=function(){if(!db||!this.files[0])return;rx(this.files[0],function(r){var a=[];r.slice(1).forEach(function(x){if(x[0]!=null&&x[1]!=null)a.push([String(x[0]).trim(),{art:String(x[1]).trim(),name:String(x[2]||"")}])});bulk("plu",a,"sp")})};
+$("fi").onchange=function(){if(!db||!this.files[0])return;rx(this.files[0],function(r){var h=-1,i;for(i=0;i<r.length;i++){if((r[i]||[]).some(function(c){return String(c).trim()==="Item No"})){h=i;break}}
+ if(h<0)return $("si").textContent="ไม่พบหัวตาราง Item No";var ix={};r[h].forEach(function(c,j){if(c!=null)ix[String(c).trim().toLowerCase()]=j});var g=function(x,k){return parseFloat(x[ix[k]])||0},a=[];
+ r.slice(h+1).forEach(function(x){var k=x[ix["item no"]];if(k==null||k==="")return;if(["1","2","3","5"].indexOf(String(parseInt(x[ix["dept no."]])))<0)return;a.push([String(k).trim(),{name:String(x[ix["description"]]||""),dept:String(x[ix["dept no."]]||""),asoh:g(x,"asoh"),usoh:g(x,"usoh"),pack:g(x,"pack size")}])});bulk("stock",a,"si")})};
+$("fa").onchange=function(){if(!db||!this.files[0])return;rx(this.files[0],function(r){var o={},h=r[0]||[];D.forEach(function(d){var j=h.indexOf(d);o[d]=[];if(j>=0)r.slice(1).forEach(function(x){if(x[j])o[d].push(String(x[j]).trim())})});
+ Promise.all(D.map(function(d){return o[d].length?db.collection("locs").doc(d).set({list:o[d]}):0})).then(function(){$("sa").textContent="นำเข้า Aisle-Bay แล้ว"})})};
+render();
+(async function(){try{db=await claude.use("db");var u=await claude.use("user");if(u)me=String(await u.id())}catch(e){}
+ render();if(!db)return;
+ db.collection("plu").onSnapshot(function(s){plu={};pa={};s.docs.forEach(function(d){var x=d.data();plu[d.id]=x;pa[x.art]=1});lookui();render()});
+ db.collection("stock").onSnapshot(function(s){art={};s.docs.forEach(function(d){art[d.id]=d.data()});lookui();render()});
+ db.collection("counts").onSnapshot(function(s){counts=s.docs.map(function(d){var x=d.data();x.id=d.id;return x});render()});
+ db.collection("bays").onSnapshot(function(s){bays={};s.docs.forEach(function(d){bays[d.id]=1});render()});
+ db.collection("locs").onSnapshot(function(s){s.docs.forEach(function(d){var l=d.data().list;if(l&&l.length)L[d.id]=l});render()});
+})();
+</script></body></html>
