@@ -53,7 +53,9 @@ td,th{border-bottom:.5px solid var(--bd);padding:8px 4px}
 nav{position:fixed;left:0;right:0;bottom:0;margin:0;gap:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--cd) 82%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:.5px solid var(--bd);z-index:5}
 nav button{border:0;background:transparent;border-radius:0;color:var(--mu);font-size:11px;font-weight:500;padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:1px}
 nav button.on{background:transparent;color:var(--ac)}
-nav button span{font-size:22px;line-height:1.1}
+nav button span{font-size:22px;line-height:1.1;pointer-events:none}
+nav{padding-left:max(8px,calc(50% - 340px));padding-right:max(8px,calc(50% - 340px))}
+nav button{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 </style></head><body class="v-a"><main>
 
 <h1 class="lt">นับสต๊อก Weight</h1>
@@ -93,6 +95,19 @@ nav button span{font-size:22px;line-height:1.1}
 </section>
 </main>
 <script>
+/* โหมดนอก claude.ai (เช่น GitHub Pages): เก็บข้อมูลใน localStorage ของเครื่องนี้ */
+if(typeof claude==="undefined"){(function(){
+var K="stockcount_",mem={},subs={},tm={};
+function ld(c){if(!mem[c]){try{mem[c]=JSON.parse(localStorage.getItem(K+c)||"{}")}catch(e){mem[c]={}}}return mem[c]}
+function snap(c){var o=ld(c);return{docs:Object.keys(o).map(function(id){return{id:id,exists:true,data:function(){return o[id]}}})}}
+function touch(c){if(tm[c])return;tm[c]=setTimeout(function(){tm[c]=0;try{localStorage.setItem(K+c,JSON.stringify(mem[c]))}catch(e){alert("พื้นที่เก็บข้อมูลในเบราว์เซอร์เต็ม")}(subs[c]||[]).forEach(function(f){f(snap(c))})},30)}
+var db={collection:function(c){return{
+ doc:function(id){return{set:function(d){ld(c)[id]=d;touch(c);return Promise.resolve()},delete:function(){delete ld(c)[id];touch(c);return Promise.resolve()}}},
+ onSnapshot:function(f){(subs[c]=subs[c]||[]).push(f);f(snap(c));return function(){}}}}};
+var dl={save:function(r){var b=r.data instanceof Blob?r.data:new Blob([r.data]),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=r.filename;document.body.appendChild(a);a.click();a.remove();return Promise.resolve({status:"saved"})}};
+window.claude={use:function(n){return Promise.resolve(n==="db"?db:n==="downloads"?dl:null)}}})()}
+</script>
+<script>
 var D=["FV","BUT","FS","FZ"],L={"FV":["510-081","510-091","510-101","510-141","510-151","510-161","510-221","510-231","510-241","510-281","510-291","510-301","510-321","510-331","510-341","510-351","510-361","510-371","510-401","510-411","510-421","510-431","510-441","510-451","510-461","511-011","511-021","511-031","511-041","511-051","999-001"],"BUT":["520-011","520-021","520-031","520-051","520-061","520-071","520-081","520-131","520-141","520-151","520-161","520-171","520-181","520-191","520-201","520-211","520-221","520-231","520-241","520-261","520-271","520-281","520-291","520-301","520-311","520-371","520-381","520-391","520-401","520-411","520-421","520-431","520-441","520-451","520-461","520-471","520-481","520-491","520-501","520-511","520-521","520-541","520-551","520-561","520-571","521-011","521-021","521-031","521-041","521-111","521-121","521-131","521-141","521-151","521-161","521-171","521-181","521-191","521-201","521-211","521-221","521-231","521-241","521-251","521-261","521-271","521-281","521-291","521-301","999-002"],"FS":["531-011","531-021","531-031","531-041","531-051","531-061","531-071","531-081","999-003"],"FZ":["550-331","550-341","550-351","550-361","550-371","560-381","560-501","560-521","560-531","560-571","560-611","560-631","560-641","560-651","560-701","560-751","560-761","560-781","560-811","560-961","560-971","560-981","570-011","551-041","551-051","551-111","999-004"]},plu={},art={},pa={},counts=[],bays={},db=null,me="",cd="FV",cl=L.FV[0],$=function(i){return document.getElementById(i)};
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function n2(x){return Math.round(x*100)/100}
@@ -124,7 +139,7 @@ function render(){
 function edui(){$("ed").innerHTML=D.map(function(d){return"<label>"+d+" ("+L[d].length+")</label><textarea rows=4 data-e='"+d+"'>"+L[d].join("\n")+"</textarea>"}).join("")}
 function lookui(){var r=look($("code").value);$("nm").textContent=r?(r.unk?"ไม่พบรหัสนี้ในระบบ":r.name):"";$("nm").style.color=r&&r.unk?"var(--wn)":"";$("pkw").hidden=!(r&&r.pack);
  var b=r&&r.s?"สต๊อกระบบ ASOH+USOH = "+n2(r.s.asoh+r.s.usoh):"";$("bk").textContent=b}
-document.addEventListener("click",function(e){var t=e.target,d=t.dataset;
+document.addEventListener("click",function(e){var t=e.target.closest("[data-t],[data-d],[data-l],[data-del],[data-v]")||e.target,d=t.dataset;
  if(d.v){var cl2=document.body.className;document.body.className="v-"+d.v;document.querySelectorAll(".bar1 button").forEach(function(b){b.classList.toggle("on",b===t)})}
  if(d.t){["count","sum","set"].forEach(function(s){$(s).hidden=s!==d.t});document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b===t)});if(d.t==="set")edui()}
  if(d.d){cd=d.d;cl=L[cd][0];render()}if(d.l){cl=d.l;render()}
