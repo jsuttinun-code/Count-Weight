@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>นับสต๊อก Weight</title>
+<title>Count-Weight</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#f4f6f8;--cd:#fff;--tx:#1b1f24;--mu:#6a7480;--bd:#dde1e6;--ac:#0b7a5a;--am:#e8a317;--wn:#c62828;--wb:#fdecea;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -56,9 +56,16 @@ nav button.on{background:transparent;color:var(--ac)}
 nav button span{font-size:22px;line-height:1.1;pointer-events:none}
 nav{padding-left:max(8px,calc(50% - 340px));padding-right:max(8px,calc(50% - 340px))}
 nav button{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#prt{display:none}
+@media print{body>main,nav,.lt{display:none!important}#prt{display:block}body{background:#fff;color:#000}@page{size:A4;margin:8mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pg{page-break-after:always;color:#000;font-size:11pt}.pg:last-child{page-break-after:auto}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}.pl{flex:1;font-size:10pt}.pt{flex:1.2;text-align:center}.pt big{font-size:16pt;font-weight:700}
+.pb2{display:flex;border:1px solid #000;background:#ffff99}.pb2 div{padding:2px 14px;text-align:center}.pb2 span{display:block;background:#f4b183;font-weight:700;font-size:10pt;padding:0 8px;margin:-2px -14px 0}.pb2 b{font-size:22pt}
+.pt2{width:100%;border-collapse:collapse}.pt2 th,.pt2 td{border:1px solid #000;padding:0 4px;height:9mm;text-align:center;font-size:10pt}.pt2 td.y{background:#ffff99}
+.pf{display:flex;border:1px solid #000;border-top:0;height:30mm}.pf div{flex:1;text-align:center;padding-top:3mm;border-right:1px solid #000}.pf div:last-child{border:0}.pf small{display:block;margin-top:16mm;font-size:7pt}}
 </style></head><body class="v-a"><main>
 
-<h1 class="lt">นับสต๊อก Weight</h1>
+<h1 class="lt">Count-Weight</h1>
 <nav><button data-t="count" class="on"><span>📋</span>นับสินค้า</button><button data-t="sum"><span>📊</span>สรุป</button><button data-t="set"><span>⚙️</span>จัดการ</button></nav>
 <div id="st" class="mu"></div>
 
@@ -73,12 +80,14 @@ nav button{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparen
   <div id="nm" class="nm"></div><div id="bk" class="mu"></div>
   <label>จำนวนที่นับได้ (kg)</label><input id="qty" type="number" step="any" inputmode="decimal">
   <button class="btn" id="add">บันทึก</button>
-  <div class="row"><button class="btn g" id="done">ปิด Bay นี้</button><button class="btn g" id="next">ปิด + Bay ถัดไป →</button></div></div>
+  <div class="row"><button class="btn g" id="done">ปิด Bay นี้</button><button class="btn g" id="next">ปิด + Bay ถัดไป →</button></div>
+  <button class="btn g" id="pr1">🖨 พิมพ์ใบนับ Bay นี้</button></div>
  <div class="card bl"><h2>รายการใน Bay นี้</h2><div class="sc"><table id="bl"></table></div></div>
 </section>
 
 <section id="sum" hidden>
  <div class="row" style="margin-bottom:10px"><button class="btn" id="dx" style="margin:0">⬇ ดาวน์โหลด Excel</button><button class="btn g" id="dc" style="margin:0">⬇ CSV</button></div>
+ <button class="btn g" id="pr2" style="margin:0 0 10px">🖨 พิมพ์ใบนับทุก Bay ที่มีข้อมูล</button>
  <div id="al"></div>
  <div class="card"><h2>ความคืบหน้า</h2><div id="pr"></div></div>
  <div class="card"><h2>เทียบสต๊อกระบบ (ASOH+USOH) ต่างมากสุด 25 รายการ</h2><div class="sc"><table id="vr"></table></div></div>
@@ -94,6 +103,7 @@ nav button{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparen
  <div class="card"><h2>แก้ไข Aisle-Bay (1 บรรทัด = 1 รหัส)</h2><div id="ed"></div><button class="btn" id="sv">บันทึกรายการ Aisle-Bay</button></div>
 </section>
 </main>
+<div id="prt"></div>
 <script>
 /* โหมดนอก claude.ai (เช่น GitHub Pages): เก็บข้อมูลใน localStorage ของเครื่องนี้ */
 if(typeof claude==="undefined"){(function(){
@@ -112,8 +122,8 @@ var D=["FV","BUT","FS","FZ"],L={"FV":["510-081","510-091","510-101","510-141","5
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function n2(x){return Math.round(x*100)/100}
 function look(c){c=c.trim();if(!c)return null;var p=plu[c],s;
- if(p){s=art[p.art];return{art:p.art,name:p.name,pack:!!(s&&s.pack>1),s:s}}
- s=art[c];if(s)return{art:c,name:s.name,pack:!pa[c]||s.pack>1,s:s};return{art:c,name:"",unk:1}}
+ if(p){s=art[p.art];return{art:p.art,name:p.name,pack:!!(s&&s.pk),s:s}}
+ s=art[c];if(s)return{art:c,name:s.name,pack:!!s.pk,s:s};return{art:c,name:"",unk:1}}
 function setLoc(){if(L[cd].indexOf(cl)<0)cl=L[cd][0]||""}
 function lk(d,l){return d+"_"+l}
 function render(){
@@ -165,14 +175,21 @@ async function expo(k){var dl=await claude.use("downloads");if(!dl)return alert(
  else{var csv="\ufeff"+A.map(function(r){return r.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"'}).join(",")}).join("\r\n");await dl.save({filename:"stock-count-"+dt+".csv",data:csv})}}
  catch(e){if(e&&e.code!=="declined")alert("ดาวน์โหลดไม่สำเร็จ ("+(e.message||e)+") ลองกดปุ่ม CSV แทน")}}
 $("dx").onclick=function(){expo("x")};$("dc").onclick=function(){expo("c")};
+function printBays(list){var dt=new Date().toLocaleDateString("en-GB"),h="";
+ list.forEach(function(b){var rs=counts.filter(function(c){return c.dept===b[0]&&c.loc===b[1]}).sort(function(x,y){return x.ts-y.ts}),np=Math.max(1,Math.ceil(rs.length/20)),ab=b[1].split("-");
+  for(var p=0;p<np;p++){var tr="";for(var i=0;i<20;i++){var c=rs[p*20+i],s=c&&art[c.art];tr+="<tr><td>"+(s?esc(s.cls||""):"")+"</td><td class=y>"+(c?esc(c.code):"")+"</td><td>"+(c?esc(c.art):"")+"</td><td class=y style='text-align:right'>"+(c?c.qty.toFixed(3):"")+"</td><td style='text-align:left'>"+(c?esc(c.name):"")+"</td><td>"+(c&&c.pack?"Pack Size":"")+"</td></tr>"}
+   h+='<div class="pg"><div class="ph"><div class="pl"><b>บมจ.สยามแม็คโคร สาขาอุดรธานี</b><br>วันที่ตรวจนับสินค้า '+dt+'<br>แผนก '+b[0]+(np>1?' · หน้า '+(p+1)+'/'+np:'')+'</div><div class="pt"><big>ใบตรวจนับสินค้าอาหารสด</big><br>( COUNTING SHEET )</div><div class="pb2"><div><span>AISLE</span><b>'+esc(ab[0])+'</b></div><div><span>BAY</span><b>'+esc(ab[1]||"")+'</b></div></div></div><table class="pt2"><tr><th style="width:9%">GRP.</th><th style="width:15%">PLU/Item</th><th style="width:15%">Item</th><th style="width:13%">จำนวน</th><th>DECSR.</th><th style="width:18%">หมายเหตุ</th></tr>'+tr+'</table><div class="pf"><div>ตรวจนับโดย<small>(เขียนตัวบรรจง)</small></div><div>ตรวจสอบโดย</div><div>ป้อนข้อมูลโดย</div></div></div>'}});
+ $("prt").innerHTML=h;setTimeout(function(){window.print()},50)}
+$("pr1").onclick=function(){printBays([[cd,cl]])};
+$("pr2").onclick=function(){var l=[];D.forEach(function(d){L[d].forEach(function(x){if(counts.some(function(c){return c.dept===d&&c.loc===x}))l.push([d,x])})});if(!l.length)return alert("ยังไม่มี Bay ที่มีข้อมูลให้พิมพ์");printBays(l)};
 $("done").onclick=function(){closeBay(0)};$("next").onclick=function(){closeBay(1)};
 $("sv").onclick=function(){if(!db)return;var ps=[];document.querySelectorAll("[data-e]").forEach(function(t){var l=t.value.split("\n").map(function(s){return s.trim()}).filter(Boolean);ps.push(db.collection("locs").doc(t.dataset.e).set({list:l}))});Promise.all(ps).then(function(){alert("บันทึกแล้ว")},function(e){alert(e.message)})};
 function rx(f,cb){var r=new FileReader();r.onload=function(e){var w=XLSX.read(e.target.result,{type:"array"});cb(XLSX.utils.sheet_to_json(w.Sheets[w.SheetNames[0]],{header:1,raw:true}))};r.readAsArrayBuffer(f)}
 async function bulk(col,arr,st){for(var i=0;i<arr.length;i+=40){await Promise.all(arr.slice(i,i+40).map(function(a){return db.collection(col).doc(a[0]).set(a[1])}));$(st).textContent="กำลังบันทึก "+Math.min(i+40,arr.length)+"/"+arr.length}$(st).textContent="นำเข้าแล้ว "+arr.length+" รายการ"}
 $("fp").onchange=function(){if(!db||!this.files[0])return;rx(this.files[0],function(r){var a=[];r.slice(1).forEach(function(x){if(x[0]!=null&&x[1]!=null)a.push([String(x[0]).trim(),{art:String(x[1]).trim(),name:String(x[2]||"")}])});bulk("plu",a,"sp")})};
 $("fi").onchange=function(){if(!db||!this.files[0])return;rx(this.files[0],function(r){var h=-1,i;for(i=0;i<r.length;i++){if((r[i]||[]).some(function(c){return String(c).trim()==="Item No"})){h=i;break}}
- if(h<0)return $("si").textContent="ไม่พบหัวตาราง Item No";var ix={};r[h].forEach(function(c,j){if(c!=null)ix[String(c).trim().toLowerCase()]=j});var g=function(x,k){return parseFloat(x[ix[k]])||0},a=[];
- r.slice(h+1).forEach(function(x){var k=x[ix["item no"]];if(k==null||k==="")return;if(["1","2","3","5"].indexOf(String(parseInt(x[ix["dept no."]])))<0)return;a.push([String(k).trim(),{name:String(x[ix["description"]]||""),dept:String(x[ix["dept no."]]||""),asoh:g(x,"asoh"),usoh:g(x,"usoh"),pack:g(x,"pack size")}])});bulk("stock",a,"si")})};
+ if(h<0)return $("si").textContent="ไม่พบหัวตาราง Item No";var ix={};r[h].forEach(function(c,j){if(c!=null)ix[String(c).trim().toLowerCase()]=j});var g=function(x,k){return parseFloat(String(x[ix[k]]==null?"":x[ix[k]]).replace(/[~,\s]/g,""))||0},a=[];
+ r.slice(h+1).forEach(function(x){var k=x[ix["item no"]];if(k==null||k==="")return;if(["1","2","3","5"].indexOf(String(parseInt(x[ix["dept no."]])))<0)return;a.push([String(k).trim(),{name:String(x[ix["description"]]||""),dept:String(x[ix["dept no."]]||""),asoh:g(x,"asoh"),usoh:g(x,"usoh"),pack:g(x,"pack size"),pk:/^\s*~/.test(String(x[ix["asoh"]]==null?"":x[ix["asoh"]])),cls:String(x[ix["class"]]||"")}])});bulk("stock",a,"si")})};
 $("fa").onchange=function(){if(!db||!this.files[0])return;rx(this.files[0],function(r){var o={},h=r[0]||[];D.forEach(function(d){var j=h.indexOf(d);o[d]=[];if(j>=0)r.slice(1).forEach(function(x){if(x[j])o[d].push(String(x[j]).trim())})});
  Promise.all(D.map(function(d){return o[d].length?db.collection("locs").doc(d).set({list:o[d]}):0})).then(function(){$("sa").textContent="นำเข้า Aisle-Bay แล้ว"})})};
 render();
