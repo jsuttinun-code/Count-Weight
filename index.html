@@ -95,6 +95,7 @@ nav button{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparen
 </section>
 
 <section id="set" hidden>
+ <div class="card" id="syc" hidden><h2>ซิงก์ข้อมูลระหว่างเครื่อง</h2><div id="sys" class="mu">กำลังเชื่อมต่อ…</div></div>
  <div class="card"><h2>นำเข้าไฟล์ Excel</h2>
   <label>1) PLU.xlsx (PLU, Art No, ชื่อ)</label><input type="file" id="fp" accept=".xlsx"><div class="mu" id="sp"></div>
   <label>2) ItemList (ASOH, USOH, Pack Size) · เก็บเฉพาะ Dept 1, 2, 3, 5</label><input type="file" id="fi" accept=".xlsx"><div class="mu" id="si"></div>
@@ -105,23 +106,37 @@ nav button{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparen
 </main>
 <div id="prt"></div>
 <script>
-/* โหมดนอก claude.ai (เช่น Vercel/GitHub Pages): เก็บข้อมูลใน IndexedDB ของเครื่องนี้ */
+/* โหมดนอก claude.ai (Vercel): เก็บในเครื่อง (IndexedDB) + ซิงก์ข้ามเครื่องผ่าน /api/kv (Upstash Redis บน Vercel) */
 if(typeof claude==="undefined"){(function(){
-var mem={},subs={},tm={},idb=null,N=["plu","stock","counts","bays","locs"],K="stockcount_";
+var mem={},subs={},tm={},cur={},q=[],busy=0,on=0,idb=null,API="/api/kv",N=["plu","stock","counts","bays","locs"],K="stockcount_",el=function(i){return document.getElementById(i)};
 function open(){return new Promise(function(res){try{var r=indexedDB.open("stockcount",1);r.onupgradeneeded=function(){r.result.createObjectStore("kv")};r.onsuccess=function(){idb=r.result;res()};r.onerror=function(){res()}}catch(e){res()}})}
 function ld(c){return mem[c]||(mem[c]={})}
 function save(c){if(!idb)return;try{var t=idb.transaction("kv","readwrite");t.objectStore("kv").put(ld(c),c);t.onerror=function(){alert("บันทึกข้อมูลลงเบราว์เซอร์ไม่สำเร็จ")}}catch(e){alert("บันทึกข้อมูลลงเบราว์เซอร์ไม่สำเร็จ")}}
 function loadAll(){return open().then(function(){return Promise.all(N.map(function(c){return new Promise(function(res){
  function mig(){try{var o=JSON.parse(localStorage.getItem(K+c)||"null");if(o){var m=ld(c);for(var k in o)if(!(k in m))m[k]=o[k];save(c);localStorage.removeItem(K+c)}}catch(e){}res()}
  if(!idb){mem[c]={};return mig()}
- var q=idb.transaction("kv").objectStore("kv").get(c);q.onsuccess=function(){mem[c]=q.result||{};mig()};q.onerror=function(){mem[c]={};mig()}})}))})}
+ var g=idb.transaction("kv").objectStore("kv").get(c);g.onsuccess=function(){mem[c]=g.result||{};mig()};g.onerror=function(){mem[c]={};mig()}})}))})}
 function snap(c){var o=ld(c);return{docs:Object.keys(o).map(function(id){return{id:id,exists:true,data:function(){return o[id]}}})}}
-function touch(c){if(tm[c])return;tm[c]=setTimeout(function(){tm[c]=0;save(c);(subs[c]||[]).forEach(function(f){f(snap(c))})},30)}
+function fire(c){(subs[c]||[]).forEach(function(f){f(snap(c))})}
+function touch(c){if(tm[c])return;tm[c]=setTimeout(function(){tm[c]=0;save(c);fire(c)},30)}
+function st(t){var e=el("sys");if(e)e.textContent=t}
+function push(c,id,d,del){if(!on)return;q.push({coll:c,id:id,data:del?null:d,deleted:!!del});if(!busy){busy=1;setTimeout(flush,300)}}
+async function flush(){try{while(q.length){var b=q.splice(0,500),r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rows:b})});if(!r.ok){q=b.concat(q);var j={};try{j=await r.json()}catch(e){}throw new Error(j.error||("HTTP "+r.status))}}st("ซิงก์แล้ว "+new Date().toLocaleTimeString())}catch(e){st("ซิงก์ไม่สำเร็จ: "+String(e.message||e).slice(0,150))}busy=0}
+async function pull(c){var s=Math.max(0,(cur[c]||0)-20),mx=cur[c]||0,ch=0,n=0;
+ for(;;){var r=await fetch(API+"?coll="+c+"&since="+s),j=await r.json();if(!r.ok)throw new Error(j.error||("HTTP "+r.status));var m=ld(c);
+  j.rows.forEach(function(x){n++;if(x.seq>mx)mx=x.seq;if(x.deleted){if(x.id in m){delete m[x.id];ch=1}}else if(JSON.stringify(m[x.id])!==JSON.stringify(x.data)){m[x.id]=x.data;ch=1}});
+  if(!j.more)break;s=j.next}
+ cur[c]=mx;if(ch){save(c);fire(c)}return n}
+async function tick(){if(!on||q.length||busy)return;try{for(var c of N)await pull(c);st("ซิงก์แล้ว "+new Date().toLocaleTimeString())}catch(e){st("ซิงก์ไม่สำเร็จ: "+String(e.message||e).slice(0,150))}}
+async function start(){try{var r=await fetch(API+"?coll=bays&since=0"),j=await r.json();if(!r.ok)throw new Error(j.error||("HTTP "+r.status));on=1;var n=0;for(var c of N)n+=await pull(c);
+ if(!n)N.forEach(function(c){var m=ld(c);for(var k in m)push(c,k,m[k],0)});
+ st("เชื่อมต่อฐานข้อมูลกลาง (Vercel) แล้ว");setInterval(tick,4000);document.addEventListener("visibilitychange",function(){if(!document.hidden)tick()})}
+ catch(e){st("ใช้ข้อมูลเฉพาะเครื่องนี้ ("+String(e.message||e).slice(0,100)+")")}}
 var db={collection:function(c){return{
- doc:function(id){return{set:function(d){ld(c)[id]=d;touch(c);return Promise.resolve()},delete:function(){delete ld(c)[id];touch(c);return Promise.resolve()}}},
+ doc:function(id){return{set:function(d){ld(c)[id]=d;touch(c);push(c,id,d,0);return Promise.resolve()},delete:function(){delete ld(c)[id];touch(c);push(c,id,null,1);return Promise.resolve()}}},
  onSnapshot:function(f){(subs[c]=subs[c]||[]).push(f);f(snap(c));return function(){}}}}};
 var dl={save:function(r){var b=r.data instanceof Blob?r.data:new Blob([r.data]),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=r.filename;document.body.appendChild(a);a.click();a.remove();return Promise.resolve({status:"saved"})}};
-var ready=loadAll();
+var ready=loadAll();ready.then(function(){var c=el("syc");if(c)c.hidden=false;start()});
 window.claude={use:function(n){return ready.then(function(){return n==="db"?db:n==="downloads"?dl:null})}}})()}
 </script>
 <script>
