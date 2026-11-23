@@ -114,7 +114,7 @@ nav button{min-height:50px;cursor:pointer;-webkit-tap-highlight-color:transparen
 <script>
 /* โหมดนอก claude.ai (Vercel): เก็บในเครื่อง (IndexedDB) + ซิงก์ข้ามเครื่องผ่าน /api/kv (Upstash Redis บน Vercel) */
 if(typeof claude==="undefined"){(function(){
-var mem={},subs={},tm={},cur={},q=[],busy=0,on=0,idb=null,API="/api/kv",N=["plu","stock","counts","bays","locs"],K="stockcount_",el=function(i){return document.getElementById(i)};
+var mem={},subs={},tm={},cur={},rec={},q=[],busy=0,on=0,idb=null,API="/api/kv",N=["plu","stock","counts","bays","locs"],K="stockcount_",el=function(i){return document.getElementById(i)};
 function open(){return new Promise(function(res){try{var r=indexedDB.open("stockcount",1);r.onupgradeneeded=function(){r.result.createObjectStore("kv")};r.onsuccess=function(){idb=r.result;res()};r.onerror=function(){res()}}catch(e){res()}})}
 function ld(c){return mem[c]||(mem[c]={})}
 function save(c){if(!idb)return;try{var t=idb.transaction("kv","readwrite");t.objectStore("kv").put(ld(c),c);t.onerror=function(){alert("บันทึกข้อมูลลงเบราว์เซอร์ไม่สำเร็จ")}}catch(e){alert("บันทึกข้อมูลลงเบราว์เซอร์ไม่สำเร็จ")}}
@@ -130,7 +130,7 @@ function push(c,id,d,del){if(!on)return;q.push({coll:c,id:id,data:del?null:d,del
 async function flush(){try{while(q.length){var b=q.splice(0,500),r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rows:b})});if(!r.ok){q=b.concat(q);var j={};try{j=await r.json()}catch(e){}throw new Error(j.error||("HTTP "+r.status))}}st("ซิงก์แล้ว "+new Date().toLocaleTimeString())}catch(e){st("ซิงก์ไม่สำเร็จ: "+String(e.message||e).slice(0,150))}busy=0}
 async function pull(c){var s=Math.max(0,(cur[c]||0)-20),mx=cur[c]||0,ch=0,n=0;
  for(;;){var r=await fetch(API+"?coll="+c+"&since="+s),j=await r.json();if(!r.ok)throw new Error(j.error||("HTTP "+r.status));var m=ld(c);
-  j.rows.forEach(function(x){n++;if(x.seq>mx)mx=x.seq;if(x.deleted){if(x.id in m){delete m[x.id];ch=1}}else if(JSON.stringify(m[x.id])!==JSON.stringify(x.data)){m[x.id]=x.data;ch=1}});
+  j.rows.forEach(function(x){n++;if(x.seq>mx)mx=x.seq;if(Date.now()-(rec[c+"|"+x.id]||0)<15000)return;if(x.deleted){if(x.id in m){delete m[x.id];ch=1}}else if(JSON.stringify(m[x.id])!==JSON.stringify(x.data)){m[x.id]=x.data;ch=1}});
   if(!j.more)break;s=j.next}
  cur[c]=mx;if(ch){save(c);fire(c)}return n}
 async function tick(){if(!on||q.length||busy)return;try{for(var c of N)await pull(c);st("ซิงก์แล้ว "+new Date().toLocaleTimeString())}catch(e){st("ซิงก์ไม่สำเร็จ: "+String(e.message||e).slice(0,150))}}
@@ -139,7 +139,7 @@ async function start(){try{var r=await fetch(API+"?coll=bays&since=0"),j=await r
  st("เชื่อมต่อฐานข้อมูลกลาง (Vercel) แล้ว");setInterval(tick,4000);document.addEventListener("visibilitychange",function(){if(!document.hidden)tick()})}
  catch(e){st("ใช้ข้อมูลเฉพาะเครื่องนี้ ("+String(e.message||e).slice(0,100)+")")}}
 var db={collection:function(c){return{
- doc:function(id){return{set:function(d){ld(c)[id]=d;touch(c);push(c,id,d,0);return Promise.resolve()},delete:function(){delete ld(c)[id];touch(c);push(c,id,null,1);return Promise.resolve()}}},
+ doc:function(id){return{set:function(d){ld(c)[id]=d;rec[c+"|"+id]=Date.now();touch(c);push(c,id,d,0);return Promise.resolve()},delete:function(){delete ld(c)[id];rec[c+"|"+id]=Date.now();touch(c);push(c,id,null,1);return Promise.resolve()}}},
  onSnapshot:function(f){(subs[c]=subs[c]||[]).push(f);f(snap(c));return function(){}}}}};
 var dl={save:function(r){var b=r.data instanceof Blob?r.data:new Blob([r.data]),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=r.filename;document.body.appendChild(a);a.click();a.remove();return Promise.resolve({status:"saved"})}};
 var ready=loadAll();ready.then(function(){var c=el("syc");if(c)c.hidden=false;start()});
@@ -230,7 +230,7 @@ $("lkc").onclick=async function(){var p=prompt("ตั้งรหัสผ่�
 $("pr2").onclick=function(){var l=[];D.forEach(function(d){L[d].forEach(function(x){if(counts.some(function(c){return c.dept===d&&c.loc===x}))l.push([d,x])})});if(!l.length)return alert("ยังไม่มี Bay ที่มีข้อมูลให้พิมพ์");printBays(l)};
 $("done").onclick=function(){closeBay(0)};
 $("rop").onclick=function(){if(db&&confirm("ยกเลิกการปิด Bay "+cl+" ใช่หรือไม่?"))db.collection("bays").doc(lk(cd,cl)).delete()};$("next").onclick=function(){closeBay(1)};
-$("sv").onclick=function(){if(!db)return;var ps=[];document.querySelectorAll("[data-e]").forEach(function(t){var l=t.value.split("\n").map(function(s){return s.trim()}).filter(Boolean);ps.push(db.collection("locs").doc(t.dataset.e).set({list:l}))});Promise.all(ps).then(function(){alert("บันทึกแล้ว")},function(e){alert(e.message)})};
+$("sv").onclick=function(){if(!db)return;var ps=[];document.querySelectorAll("[data-e]").forEach(function(t){var l=t.value.split("\n").map(function(s){return s.trim()}).filter(Boolean);if(l.length){L[t.dataset.e]=l;ps.push(db.collection("locs").doc(t.dataset.e).set({list:l}))}});setLoc();render();edui();Promise.all(ps).then(function(){alert("บันทึกแล้ว")},function(e){alert(e.message)})};
 function rx(f,cb){var r=new FileReader();r.onload=function(e){var w=XLSX.read(e.target.result,{type:"array"});cb(XLSX.utils.sheet_to_json(w.Sheets[w.SheetNames[0]],{header:1,raw:true}))};r.readAsArrayBuffer(f)}
 async function bulk(col,arr,st){for(var i=0;i<arr.length;i+=40){await Promise.all(arr.slice(i,i+40).map(function(a){return db.collection(col).doc(a[0]).set(a[1])}));$(st).textContent="กำลังบันทึก "+Math.min(i+40,arr.length)+"/"+arr.length}$(st).textContent="นำเข้าแล้ว "+arr.length+" รายการ"}
 $("fp").onchange=function(){if(!db||!this.files[0])return;rx(this.files[0],function(r){var a=[];r.slice(1).forEach(function(x){if(x[0]!=null&&x[1]!=null)a.push([String(x[0]).trim(),{art:String(x[1]).trim(),name:String(x[2]||"")}])});bulk("plu",a,"sp")})};
