@@ -238,7 +238,7 @@ $("fi").onchange=function(){if(!db||!this.files[0])return;rx(this.files[0],funct
  if(h<0)return $("si").textContent="ไม่พบหัวตาราง Item No";var ix={};r[h].forEach(function(c,j){if(c!=null)ix[String(c).trim().toLowerCase()]=j});var g=function(x,k){return parseFloat(String(x[ix[k]]==null?"":x[ix[k]]).replace(/[~,\s]/g,""))||0},a=[];
  r.slice(h+1).forEach(function(x){var k=x[ix["item no"]];if(k==null||k==="")return;if(["1","2","3","5"].indexOf(String(parseInt(x[ix["dept no."]])))<0)return;a.push([String(k).trim(),{name:String(x[ix["description"]]||""),dept:String(x[ix["dept no."]]||""),asoh:g(x,"asoh"),usoh:g(x,"usoh"),pack:g(x,"pack size"),pk:/^\s*~/.test(String(x[ix["asoh"]]==null?"":x[ix["asoh"]])),cls:String(x[ix["class"]]||""),price:g(x,"selling price")}])});bulk("stock",a,"si")})};
 $("fa").onchange=function(){if(!db||!this.files[0])return;rx(this.files[0],function(r){var o={},h=r[0]||[];D.forEach(function(d){var j=h.indexOf(d);o[d]=[];if(j>=0)r.slice(1).forEach(function(x){if(x[j])o[d].push(String(x[j]).trim())})});
- Promise.all(D.map(function(d){return o[d].length?db.collection("locs").doc(d).set({list:o[d]}):0})).then(function(){$("sa").textContent="นำเข้า Aisle-Bay แล้ว"})})};
+ D.forEach(function(d){if(o[d].length)L[d]=o[d]});setLoc();render();if(ul)edui();Promise.all(D.map(function(d){return o[d].length?db.collection("locs").doc(d).set({list:o[d]}):0})).then(function(){$("sa").textContent="นำเข้า Aisle-Bay แล้ว";$("fa").value=""})})};
 render();
 (async function(){try{db=await claude.use("db");var u=await claude.use("user");if(u)me=String(await u.id())}catch(e){}
  render();if(!db)return;
@@ -246,6 +246,6 @@ render();
  db.collection("stock").onSnapshot(function(s){art={};s.docs.forEach(function(d){art[d.id]=d.data()});lookui();render()});
  db.collection("counts").onSnapshot(function(s){counts=s.docs.map(function(d){var x=d.data();x.id=d.id;return x});render()});
  db.collection("bays").onSnapshot(function(s){bays={};s.docs.forEach(function(d){bays[d.id]=1});render()});
- db.collection("locs").onSnapshot(function(s){s.docs.forEach(function(d){var x=d.data();if(d.id==="_pw"){pwh=x.h;return}var l=x.list;if(Array.isArray(l))L[d.id]=l});if(!ul)lockui();render()});
+ db.collection("locs").onSnapshot(function(s){s.docs.forEach(function(d){var x=d.data();if(d.id==="_pw"){pwh=x.h;return}var l=x.list;if(Array.isArray(l))L[d.id]=l});if(!ul)lockui();else edui();render()});
 })();
 </script></body></html>
