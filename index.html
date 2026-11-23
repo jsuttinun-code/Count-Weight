@@ -196,9 +196,12 @@ async function expo(k){var dl=await claude.use("downloads");if(!dl)return alert(
  var V=[["Art No","ชื่อสินค้า","นับได้","ASOH","USOH","ASOH+USOH","ส่วนต่าง","ราคาขาย","Diff Amount"]];
  Object.keys(ag).forEach(function(a){var s=art[a];V.push([a,(s&&s.name)||nm[a],n2(ag[a]),s?s.asoh:"",s?s.usoh:"",s?s.asoh+s.usoh:"",s?n2(ag[a]-s.asoh-s.usoh):"",s&&s.price?s.price:"",s&&s.price?n2((ag[a]-s.asoh-s.usoh)*s.price):""])});
  var G=[["แผนก","Bay ทั้งหมด","ปิดแล้ว","%"]];D.forEach(function(d){var t=L[d].length,n=L[d].filter(function(l){return bays[lk(d,l)]}).length;G.push([d,t,n,t?Math.round(n*100/t):0])});
+ var oi=function(c){var a=D.indexOf(c.dept),b=L[c.dept]?L[c.dept].indexOf(c.loc):-1;return[a<0?99:a,b<0?9999:b]};
+ var nn=function(x){x=String(x);return /^[1-9]\d{0,14}$/.test(x)?+x:x},M=[["AisleBay","PLU","Item","Qty","Decsr"]];
+ counts.filter(function(c){return !c.pack}).sort(function(x,y){var p=oi(x),q=oi(y);return p[0]-q[0]||p[1]-q[1]||x.ts-y.ts}).forEach(function(c){M.push([c.loc,nn(c.code),nn(c.art||c.code),Math.round(c.qty*1000)/1000,c.name])});
  var dt=new Date().toISOString().slice(0,10);
- try{if(k==="x"){var wb=XLSX.utils.book_new();[["ผลนับ",A],["เทียบสต๊อก",V],["Pack Size",P],["ความคืบหน้า",G]].forEach(function(s){XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s[1]),s[0])});await dl.save({filename:"stock-count-"+dt+".xlsx",data:XLSX.write(wb,{type:"array",bookType:"xlsx"})})}
- else{var csv="\ufeff"+A.map(function(r){return r.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"'}).join(",")}).join("\r\n");await dl.save({filename:"stock-count-"+dt+".csv",data:csv})}}
+ try{if(k==="x"){var wb=XLSX.utils.book_new();[["ผลนับ",M],["เทียบสต๊อก",V],["Pack Size",P],["ความคืบหน้า",G]].forEach(function(s){var ws=XLSX.utils.aoa_to_sheet(s[1]);if(s[0]==="ผลนับ")ws["!cols"]=[{wch:10},{wch:9},{wch:10},{wch:9},{wch:42}];XLSX.utils.book_append_sheet(wb,ws,s[0])});await dl.save({filename:"stock-count-"+dt+".xlsx",data:XLSX.write(wb,{type:"array",bookType:"xlsx"})})}
+ else{var csv="\ufeff"+M.map(function(r){return r.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"'}).join(",")}).join("\r\n");await dl.save({filename:"stock-count-"+dt+".csv",data:csv})}}
  catch(e){if(e&&e.code!=="declined")alert("ดาวน์โหลดไม่สำเร็จ ("+(e.message||e)+") ลองกดปุ่ม CSV แทน")}}
 $("dx").onclick=function(){expo("x")};$("dc").onclick=function(){expo("c")};
 function printBays(list){var dt=new Date().toLocaleDateString("en-GB"),h="";
